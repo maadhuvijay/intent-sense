@@ -9,6 +9,7 @@ type LabelingMode = 'Zero-shot' | 'Few-shot';
 interface InputPanelProps {
   onGenerate: (task: LabelingTask, mode: LabelingMode, text: string) => void;
   isGenerating?: boolean;
+  onTaskChange?: () => void;
 }
 
 const labelingTasks: LabelingTask[] = [
@@ -17,7 +18,7 @@ const labelingTasks: LabelingTask[] = [
   'User Signal Classification',
 ];
 
-export default function InputPanel({ onGenerate, isGenerating = false }: InputPanelProps) {
+export default function InputPanel({ onGenerate, isGenerating = false, onTaskChange }: InputPanelProps) {
   const [task, setTask] = useState<LabelingTask | ''>('');
   const [mode, setMode] = useState<LabelingMode>('Zero-shot');
   const [text, setText] = useState('');
@@ -39,7 +40,12 @@ export default function InputPanel({ onGenerate, isGenerating = false }: InputPa
           <CustomDropdown
             value={task}
             options={labelingTasks}
-            onChange={(value) => setTask(value)}
+            onChange={(value) => {
+              setTask(value);
+              if (onTaskChange) {
+                onTaskChange();
+              }
+            }}
             placeholder="Select a labeling task..."
             onOpen={() => setTask('')}
           />

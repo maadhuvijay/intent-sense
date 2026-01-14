@@ -118,7 +118,14 @@ export default function Home() {
             {/* Subtle color tint */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#0065F8]/10 via-[#00CAFF]/5 to-[#00FFDE]/5 pointer-events-none rounded-3xl" />
             <div className="relative z-10 h-full">
-              <InputPanel onGenerate={handleGenerate} isGenerating={isGenerating} />
+              <InputPanel 
+                onGenerate={handleGenerate} 
+                isGenerating={isGenerating}
+                onTaskChange={() => {
+                  setResult(null);
+                  setError(null);
+                }}
+              />
             </div>
           </div>
         </div>
