@@ -1,65 +1,143 @@
-import Image from "next/image";
+'use client';
+
+import React, { useState } from 'react';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import InputPanel from './components/InputPanel';
+import OutputPanel from './components/OutputPanel';
+
+type LabelingTask = 'Intent Classification' | 'Sentiment Analysis' | 'User Signal Classification';
+type LabelingMode = 'Zero-shot' | 'Few-shot';
+
+interface LabelResult {
+  label: string | string[];
+  confidence: number;
+  ambiguity: boolean;
+  humanReview: boolean;
+  json: string;
+}
 
 export default function Home() {
+  const [result, setResult] = useState<LabelResult | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerate = async (
+    task: LabelingTask,
+    mode: LabelingMode,
+    text: string
+  ) => {
+    if (!text.trim()) {
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      // Convert task and mode to lowercase for API
+      const taskLower = task.toLowerCase();
+      const modeLower = mode.toLowerCase();
+
+      const response = await fetch('/api/label', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          task: taskLower,
+          mode: modeLower,
+          text: text.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to generate labels';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // If response is not JSON (e.g., HTML error page), use status text
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const apiResult = await response.json();
+
+      // Format label for display (handle array)
+      const labelDisplay = Array.isArray(apiResult.label)
+        ? apiResult.label.join(', ')
+        : apiResult.label;
+
+      // Convert confidence from 0-1 to percentage
+      const confidencePercent = Math.round(apiResult.confidence * 100);
+
+      const formattedResult: LabelResult = {
+        label: labelDisplay,
+        confidence: confidencePercent,
+        ambiguity: apiResult.ambiguity_detected || false,
+        humanReview: apiResult.review_recommended || false,
+        json: JSON.stringify(apiResult, null, 2),
+      };
+
+      setResult(formattedResult);
+    } catch (err: any) {
+      console.error('Error generating labels:', err);
+      setError(err.message || 'An error occurred while generating labels');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex min-h-screen flex-col bg-[#0f0f0f]">
+      {/* Base Layer - Deep Charcoal Background */}
+      <div className="fixed inset-0 bg-[#0f0f0f]" />
+      
+      {/* Gradient Glow Layer - Bottom Radial Glow */}
+      <div 
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(ellipse 140% 100% at 50% 100%, rgba(76, 29, 149, 0.5) 0%, rgba(91, 33, 182, 0.35) 25%, rgba(109, 40, 217, 0.2) 45%, transparent 70%)'
+        }}
+      />
+      
+      {/* Background texture */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:24px_24px] opacity-10 pointer-events-none" />
+      
+      <Header />
+      
+      <main className="relative z-10 flex flex-1 overflow-hidden py-6 px-12 gap-6 justify-center">
+        {/* Left Panel - Input */}
+        <div className="flex w-[42%] flex-col">
+          <div className="h-full rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-white/5 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] relative overflow-hidden">
+            {/* Glass highlight overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-30 pointer-events-none rounded-3xl" />
+            {/* Subtle color tint */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0065F8]/10 via-[#00CAFF]/5 to-[#00FFDE]/5 pointer-events-none rounded-3xl" />
+            <div className="relative z-10 h-full">
+              <InputPanel onGenerate={handleGenerate} isGenerating={isGenerating} />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Right Panel - Output */}
+        <div className="flex w-[42%] flex-col">
+          <div className="h-full rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-white/5 backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] relative overflow-hidden">
+            {/* Glass highlight overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-30 pointer-events-none rounded-3xl" />
+            {/* Subtle color tint */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0065F8]/10 via-[#00CAFF]/5 to-[#00FFDE]/5 pointer-events-none rounded-3xl" />
+            <div className="relative z-10 h-full">
+              <OutputPanel result={result} error={error} />
+            </div>
+          </div>
         </div>
       </main>
+      
+      <Footer />
     </div>
   );
 }
