@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+# cursor/specstory
+.specstory/
 
 # debug
 npm-debug.log*
