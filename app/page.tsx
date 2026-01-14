@@ -10,7 +10,7 @@ type LabelingTask = 'Intent Classification' | 'Sentiment Analysis' | 'User Signa
 type LabelingMode = 'Zero-shot' | 'Few-shot';
 
 interface LabelResult {
-  label: string | string[];
+  label: string;
   confidence: number;
   ambiguity: boolean;
   humanReview: boolean;
