@@ -15,7 +15,7 @@ export default function Header() {
             priority
           />
           <h1 className="text-3xl font-semibold tracking-tight bg-gradient-to-r from-[#5409DA] to-[#9D7AFF] bg-clip-text text-transparent">
-            IntentSense – AI Powered Text Labeling
+            Intentsense - AI powered Text Labeling Application
           </h1>
         </div>
       </div>
